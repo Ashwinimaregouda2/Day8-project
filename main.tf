@@ -73,17 +73,7 @@ resource "aws_s3_bucket" "static_content" {
 
 }
 
-# RDS Database
-resource "aws_db_instance" "app_db" {
-  allocated_storage    = 20
-  engine              = "mysql"
-  instance_class      = "db.t2.micro"
-  multi_az           = true
-  db_name            = "appdb"
-  username          = "admin"
-  password          = "password123"
-  skip_final_snapshot = true
-}
+
 
 # CloudWatch Logs
 resource "aws_cloudwatch_log_group" "app_logs" {
