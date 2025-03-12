@@ -37,8 +37,17 @@ resource "aws_lb" "app_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets           = [aws_subnet.public.id]
+  
+  subnets = [
+    aws_subnet.public1.id,
+    aws_subnet.public2.id
+  ]
+
+  enable_http2 = true
 }
+
+
+
 
 # Target Group
 resource "aws_lb_target_group" "app_tg" {
