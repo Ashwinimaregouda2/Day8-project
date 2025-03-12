@@ -7,6 +7,21 @@ resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
 
+# Internet Gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+# Public Route Table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
 # Public Subnets
 resource "aws_subnet" "public1" {
   vpc_id                  = aws_vpc.main.id
@@ -20,6 +35,17 @@ resource "aws_subnet" "public2" {
   cidr_block              = "10.0.3.0/24"
   map_public_ip_on_launch = true
   availability_zone       = "ap-southeast-2b"
+}
+
+# Associate Public Subnets with Route Table
+resource "aws_route_table_association" "public1" {
+  subnet_id      = aws_subnet.public1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public2" {
+  subnet_id      = aws_subnet.public2.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 # Private Subnet
@@ -47,7 +73,7 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Security Group for Instances
+# Security Group for EC2 Instances
 resource "aws_security_group" "instance_sg" {
   vpc_id = aws_vpc.main.id
 
@@ -97,12 +123,40 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# IAM Role for EC2 Instances
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2-role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "ec2-profile"
+  role = aws_iam_role.ec2_role.name
+}
+
 # Launch Template
 resource "aws_launch_template" "app_lt" {
   name_prefix   = "app-lt"
   image_id      = "ami-09e143e99e8fa74f9"
   instance_type = "t2.micro"
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
+  }
 
   user_data = base64encode(<<EOF
 #!/bin/bash
@@ -128,6 +182,7 @@ resource "aws_autoscaling_group" "app_asg" {
   }
 
   target_group_arns = [aws_lb_target_group.app_tg.arn]
+  health_check_type = "ELB"
 }
 
 # S3 Bucket
