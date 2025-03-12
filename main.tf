@@ -69,7 +69,7 @@ resource "aws_autoscaling_group" "app_asg" {
 # S3 Bucket
 resource "aws_s3_bucket" "static_content" {
 
-  bucket = "my-static-content-bucket"
+  bucket = "my-static-content-bucket1235"
 
 }
 
