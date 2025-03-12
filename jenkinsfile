@@ -5,7 +5,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git 'https://github.com/Ashwinimaregouda2/terraform-aws-infra.git'
+        git 'https://github.com/Ashwinimaregouda2/Day8-project.git'
       }
     }
     
