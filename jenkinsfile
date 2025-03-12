@@ -1,11 +1,12 @@
 
+
 pipeline {
   agent any
   
   stages {
     stage('Checkout') {
       steps {
-        git 'https://github.com/Ashwinimaregouda2/Day8-project.git'
+        git branch: 'main', url: 'https://github.com/Ashwinimaregouda2/Day8-project.git'
       }
     }
     
